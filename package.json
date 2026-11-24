@@ -1,0 +1,23 @@
+{
+  "name": "launch-crew",
+  "version": "0.1.0",
+  "description": "A researcher, a writer and a critic that turn a code repo into launch posts for X, with every claim checked against the repo and a human approval step before anything is final.",
+  "type": "module",
+  "bin": {
+    "launch-crew": "dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "crew": "tsx src/cli.ts",
+    "test": "node --import tsx --test test/*.test.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": ["ai-agents", "multi-agent", "claude", "claude-code", "content", "human-in-the-loop"],
+  "license": "MIT",
+  "engines": { "node": ">=22" },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
+  }
+}
