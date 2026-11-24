@@ -38,7 +38,7 @@ export const DRAFT_SCHEMA = {
   },
 };
 
-export function writerPrompt(research: Research, facts: Fact[], repoUrl: string | null, previous?: { draft: Draft; issues: Issue[] }): string {
+export function writerPrompt(research: Research, facts: Fact[], repoUrl: string | null, previous?: { draft: Draft; issues: Issue[]; earlier: Issue[] }): string {
   const sheet = {
     name: research.name,
     oneLiner: research.oneLiner,
@@ -54,12 +54,15 @@ export function writerPrompt(research: Research, facts: Fact[], repoUrl: string 
   if (previous) {
     lines.push(
       `<previous_draft>\n${JSON.stringify(previous.draft, null, 2)}\n</previous_draft>`,
-      `<feedback>\n${previous.issues.map((i) => `- [${i.where}] ${i.rule}: "${i.quote}". ${i.fix}`).join("\n")}\n</feedback>`,
-      "Your previous draft was sent back. Fix every point in the feedback and keep what was working. Return the full new draft.",
+      `<feedback>\n${previous.issues.map(line).join("\n")}\n</feedback>`,
+      ...(previous.earlier.length ? [`<earlier_feedback>\n${previous.earlier.map(line).join("\n")}\n</earlier_feedback>`] : []),
+      `Your previous draft was sent back. Fix every point in the feedback and keep what was working.${previous.earlier.length ? " The earlier feedback was about older drafts and still applies: don't bring back anything it asked you to remove." : ""} Return the full new draft.`,
     );
   } else lines.push("Write the post and the thread.");
   return lines.join("\n\n");
 }
+
+const line = (i: Issue) => `- [${i.where}] ${i.rule}: "${i.quote}". ${i.fix}`;
 
 export function asDraft(output: unknown): Draft {
   const o = output as any;

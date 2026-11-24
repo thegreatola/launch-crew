@@ -65,7 +65,8 @@ export async function runCrew(source: Source, runner: AgentRunner, opts: CrewOpt
     log(`researcher: ${research.facts.length} facts, ${kept.length} verified against the files, ${dropped.length} dropped (${r.toolCalls.length} tool calls)`);
     if (kept.length < (opts.minFacts ?? 4)) throw new Error(`only ${kept.length} facts survived verification, too few to write from`);
 
-    let previous: { draft: Round["draft"]; issues: Issue[] } | undefined;
+    let previous: { draft: Round["draft"]; issues: Issue[]; earlier: Issue[] } | undefined;
+    const feedback: Issue[] = [];
     for (let n = 1; n <= opts.maxRounds; n++) {
       const w = await call({ name: `writer-${n}`, prompt: writerPrompt(run.research, kept, source.repoUrl, previous), systemPrompt: WRITER_SYSTEM, schema: DRAFT_SCHEMA, tools: [] });
       const draft = asDraft(w.output);
@@ -74,7 +75,8 @@ export async function runCrew(source: Source, runner: AgentRunner, opts: CrewOpt
       run.rounds.push(round);
       if (issues.length) {
         log(`round ${n}: lint sent it back (${summarize(issues)})`);
-        previous = { draft, issues };
+        previous = { draft, issues, earlier: [...feedback] };
+        feedback.push(...issues);
         await save();
         continue;
       }
@@ -88,7 +90,8 @@ export async function runCrew(source: Source, runner: AgentRunner, opts: CrewOpt
         break;
       }
       log(`round ${n}: critic sent it back (${summarize(round.critique.issues)})`);
-      previous = { draft, issues: round.critique.issues };
+      previous = { draft, issues: round.critique.issues, earlier: [...feedback] };
+      feedback.push(...round.critique.issues);
     }
 
     run.final = run.rounds.at(-1)?.draft;

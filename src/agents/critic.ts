@@ -11,7 +11,7 @@ export const CRITIC_SYSTEM = `You are the critic on a launch crew. A writer draf
 A program has already checked length, links, dashes, hashtags, stock phrases and that every number comes from the facts. You judge what it can't:
 - hook: the first line of the post and of the thread must make a developer stop. Opening with the project name and a definition, or a vague claim, fails.
 - specific: every part should say something only this project could say. Generic lines ("makes your workflow easier", "built for developers") fail.
-- supported: no claim may go beyond the facts. Words like "production-ready", "fastest", "first", "anyone can", or implied users and adoption that the facts don't show fail.
+- supported: no claim may go beyond the facts. Each fact has a claim and the exact quote from the repo that backs it; detail that is in the quote counts as supported. Words like "production-ready", "fastest", "first", "anyone can", or implied users and adoption that the facts don't show fail.
 - voice: it should sound like the builder talking, not like marketing or an AI. Hype, filler and forced rhetorical questions fail.
 - story: the thread should move forward. Parts that repeat each other, or a thread with no clear "how to try it" at the end, fail.
 - cta: exactly one clear next step (the link, or what to try). None, or several competing ones, fails.
@@ -48,7 +48,7 @@ export function criticPrompt(draft: Draft, facts: Fact[]): string {
     thread: draft.thread.map((p, i) => ({ part: i + 1, text: p.text })),
   };
   return [
-    `<facts>\n${JSON.stringify(facts.map(({ id, claim }) => ({ id, claim })), null, 2)}\n</facts>`,
+    `<facts>\n${JSON.stringify(facts.map(({ id, claim, quote }) => ({ id, claim, quote })), null, 2)}\n</facts>`,
     `<draft>\n${JSON.stringify(view, null, 2)}\n</draft>`,
     "Review the draft.",
   ].join("\n\n");

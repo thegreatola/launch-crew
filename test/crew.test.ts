@@ -102,6 +102,11 @@ test("the crew: lint sends back round 1, the critic round 2, and approves round 
   // The writer sees the feedback, including the lint's, and never the dropped fact.
   assert.match(runner.calls[2]!.prompt, /ungrounded-number: "300"/);
   assert.match(runner.calls[4]!.prompt, /Add the link/);
+  // Round 3's writer still sees round 1's feedback, so it can't bring back what it already removed.
+  assert.match(runner.calls[4]!.prompt, /<earlier_feedback>[\s\S]*ungrounded-number: "300"/);
+  assert.ok(!runner.calls[2]!.prompt.includes("<earlier_feedback>"));
+  // The critic judges against the same evidence the writer used: claims and their quotes.
+  assert.match(runner.calls[3]!.prompt, /"quote": "It parses a 211 MB file in under a second\."/);
   assert.ok(!runner.calls.some((c) => c.prompt.includes("900 users")));
   const report = readFileSync(path.join(dir, "report.md"), "utf8");
   assert.match(report, /Waiting for your approval\. Nothing has been posted\./);
