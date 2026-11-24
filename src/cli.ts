@@ -5,7 +5,7 @@
  * launch-crew show <run folder>                print the run's report
  * launch-crew critic-eval                      measure the critic on drafts with planted flaws
  */
-import { readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { parseArgs } from "node:util";
 import { approve } from "./approve.js";
@@ -37,7 +37,7 @@ const { values, positionals } = parseArgs({
 function latestRun(runsDir: string): string {
   const dirs = readdirSync(runsDir)
     .map((d) => path.join(runsDir, d))
-    .filter((d) => statSync(d).isDirectory())
+    .filter((d) => statSync(d).isDirectory() && existsSync(path.join(d, "run.json")))
     .sort();
   if (!dirs.length) throw new Error(`no runs in ${runsDir}`);
   return dirs.at(-1)!;

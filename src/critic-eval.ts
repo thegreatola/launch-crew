@@ -11,12 +11,12 @@ export const EVAL_REPO = "https://github.com/thegreatola/agent-trace-viewer";
 
 const fact = (id: string, claim: string, quote = claim): Fact => ({ id, claim, path: "README.md", quote });
 export const EVAL_FACTS: Fact[] = [
-  fact("f1", "It builds one HTML file on your machine; nothing is uploaded and the page can't make a network request."),
-  fact("f2", "It reads Claude Code headless runs (stream-json), Claude Code session files, and market-agent-evals runs."),
+  fact("f1", "It builds one HTML file on your machine with no server; nothing is uploaded and the page can't make a network request."),
+  fact("f2", "It reads Claude Code headless runs (stream-json), Claude Code session files, and runs from market-agent-evals, the author's own eval harness."),
   fact("f3", "Each model call and tool call gets a bar on a shared time axis, so parallel tool calls overlap and slow steps stand out."),
   fact("f4", "For graded eval runs, failed checks are listed first and the strings a check complained about are marked in the answer."),
   fact("f5", "On a real session resumed days later, timing model calls from the last tool result produced a 12-day model call; calls now start at the latest event, and a test covers it."),
-  fact("f6", "Idle gaps over 30 seconds are shortened on the timeline, and per-step durations stay real."),
+  fact("f6", "Real sessions run for hours with the agent idle while the person reads or types; idle gaps over 30 seconds are shortened on the timeline, and per-step durations stay real."),
   fact("f7", "A 211 MB session with 1,291 model calls parses in under a second."),
   fact("f8", "Session files hold account IDs, folder paths and memory files; the parsers copy only an allowlist of fields, and a test plants those fields and checks none reach the HTML."),
   fact("f9", "There are 17 offline tests, and CI runs them on Node 22 and 24."),
@@ -53,7 +53,7 @@ export const CRITIC_CASES: CriticCase[] = [
   { id: "clean-base", draft: BASE, flaw: null },
   {
     id: "clean-privacy-hook",
-    draft: variant({ post: p(`Every Claude Code session file has your account IDs and memory files in it. I built a trace viewer that reads them and keeps all of that out of the page it builds, with a test to prove it. One offline HTML file: ${EVAL_REPO}`, "f8", "f1") }),
+    draft: variant({ post: p(`Claude Code session files hold your account IDs and memory files. I built a trace viewer that reads them and keeps all of that out of the page it builds, with a test to prove it. One offline HTML file: ${EVAL_REPO}`, "f8", "f1") }),
     flaw: null,
   },
   { id: "clean-short-thread", draft: variant({ keep: [1, 4, 5] }), flaw: null },
