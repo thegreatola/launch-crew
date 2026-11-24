@@ -1,6 +1,6 @@
 /**
- * Does the critic catch what it is there to catch? Thirteen hand-written drafts
- * about agent-trace-viewer: ten with one planted flaw each, three clean. Every
+ * Does the critic catch what it is there to catch? Sixteen hand-written drafts
+ * about agent-trace-viewer: twelve with one planted flaw each, four clean. Every
  * draft passes the lint (a test checks), so this measures the LLM layer only.
  */
 import { CRITIC_SYSTEM, CRITIQUE_SCHEMA, asCritique, criticPrompt } from "./agents/critic.js";
@@ -21,6 +21,7 @@ export const EVAL_FACTS: Fact[] = [
   fact("f8", "Session files hold account IDs, folder paths and memory files; the parsers copy only an allowlist of fields, and a test plants those fields and checks none reach the HTML."),
   fact("f9", "There are 17 offline tests, and CI runs them on Node 22 and 24."),
   fact("f10", "Run node dist/cli.js run.jsonl, or --latest for the newest Claude Code session in the current folder."),
+  fact("f11", "In market-agent-evals, the first run's harness bugs made the grounded prompt look 14 points better (83% vs 69%); after the fixes, over 108 trials, the baseline passed 91% and the grounded prompt 87%."),
 ];
 
 const p = (text: string, ...factIds: string[]): Part => ({ text, factIds });
@@ -57,6 +58,11 @@ export const CRITIC_CASES: CriticCase[] = [
     flaw: null,
   },
   { id: "clean-short-thread", draft: variant({ keep: [1, 4, 5] }), flaw: null },
+  {
+    id: "clean-comparison",
+    draft: variant({ thread: { 2: p("My first eval run said the grounded prompt was 14 points better, 83% vs 69%. The grader was wrong. After the fix, the baseline won, 91% vs 87%. For graded runs like these, failed checks come first and the flagged text is marked in the answer.", "f4", "f11") } }),
+    flaw: null,
+  },
   {
     id: "hook-definition",
     draft: variant({ post: p(`agent-trace-viewer is a tool for viewing agent traces. It reads Claude Code runs and shows them as a timeline in one HTML file: ${EVAL_REPO}`, "f2", "f3", "f1") }),
@@ -109,6 +115,17 @@ export const CRITIC_CASES: CriticCase[] = [
     id: "too-many-ctas",
     draft: variant({ thread: { 5: p(`Star the repo, follow me for more builds, share this with your team, and reply with what I should build next. ${EVAL_REPO}`) } }),
     flaw: { rules: ["cta"], where: "thread 5", note: "four competing asks" },
+  },
+  {
+    id: "comparison-flipped",
+    draft: variant({ thread: { 2: p("I tested it on my own eval harness, 108 trials of two prompts. The grounded prompt beat the baseline, 91% to 87%, and for graded runs the failed checks come first with the flagged text marked.", "f2", "f4", "f11") } }),
+    flaw: { rules: ["supported"], where: "thread 2", note: "every number is right, but the baseline won, not the grounded prompt" },
+  },
+  {
+    // A real draft from a live run: the order of the numbers implies the wrong winner.
+    id: "comparison-implied",
+    draft: variant({ thread: { 2: p("My first eval run said the grounded prompt was 14 points better, 83% vs 69%. The grader was wrong. After the fix it came out 91% vs 87%. For graded runs like these, failed checks come first and the flagged text is marked in the answer.", "f4", "f11") } }),
+    flaw: { rules: ["supported"], where: "thread 2", note: "reads as if the grounded prompt still won; the baseline did" },
   },
 ];
 
