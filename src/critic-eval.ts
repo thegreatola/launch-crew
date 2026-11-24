@@ -47,7 +47,7 @@ export interface CriticCase {
   id: string;
   draft: Draft;
   /** null for a clean draft the critic should approve. */
-  flaw: null | { rules: string[]; where: Where; note: string };
+  flaw: null | { rules: string[]; where: Where; note: string; /** When set, a catch must also mention this text in its quote or fix. */ mark?: string };
 }
 
 export const CRITIC_CASES: CriticCase[] = [
@@ -60,7 +60,7 @@ export const CRITIC_CASES: CriticCase[] = [
   { id: "clean-short-thread", draft: variant({ keep: [1, 4, 5] }), flaw: null },
   {
     id: "clean-comparison",
-    draft: variant({ thread: { 2: p("My first eval run said the grounded prompt was 14 points better, 83% vs 69%. The grader was wrong. After the fix, the baseline won, 91% vs 87%. For graded runs like these, failed checks come first and the flagged text is marked in the answer.", "f4", "f11") } }),
+    draft: variant({ thread: { 2: p("My first eval run said the grounded prompt was 14 points better, 83% vs 69%. Bugs in my harness did that. After the fixes, the baseline won, 91% vs 87%. For graded runs like these, failed checks come first and the flagged text is marked in the answer.", "f4", "f11") } }),
     flaw: null,
   },
   {
@@ -119,13 +119,13 @@ export const CRITIC_CASES: CriticCase[] = [
   {
     id: "comparison-flipped",
     draft: variant({ thread: { 2: p("I tested it on my own eval harness, 108 trials of two prompts. The grounded prompt beat the baseline, 91% to 87%, and for graded runs the failed checks come first with the flagged text marked.", "f2", "f4", "f11") } }),
-    flaw: { rules: ["supported"], where: "thread 2", note: "every number is right, but the baseline won, not the grounded prompt" },
+    flaw: { rules: ["supported"], where: "thread 2", note: "every number is right, but the baseline won, not the grounded prompt", mark: "91%" },
   },
   {
     // A real draft from a live run: the order of the numbers implies the wrong winner.
     id: "comparison-implied",
-    draft: variant({ thread: { 2: p("My first eval run said the grounded prompt was 14 points better, 83% vs 69%. The grader was wrong. After the fix it came out 91% vs 87%. For graded runs like these, failed checks come first and the flagged text is marked in the answer.", "f4", "f11") } }),
-    flaw: { rules: ["supported"], where: "thread 2", note: "reads as if the grounded prompt still won; the baseline did" },
+    draft: variant({ thread: { 2: p("My first eval run said the grounded prompt was 14 points better, 83% vs 69%. Bugs in my harness did that. After the fixes it came out 91% vs 87%. For graded runs like these, failed checks come first and the flagged text is marked in the answer.", "f4", "f11") } }),
+    flaw: { rules: ["supported"], where: "thread 2", note: "reads as if the grounded prompt still won; the baseline did", mark: "91%" },
   },
 ];
 
@@ -150,8 +150,9 @@ export async function runCriticEval(runner: AgentRunner, model: string, log: (s:
       continue;
     }
     const crit = asCritique(r.output, c.draft);
-    const correct = c.flaw ? crit.verdict === "revise" && crit.issues.some((i) => c.flaw!.rules.includes(i.rule)) : crit.verdict === "approve";
-    const rightPlace = c.flaw ? crit.issues.some((i) => i.where === c.flaw!.where && c.flaw!.rules.includes(i.rule)) : correct;
+    const names = (i: Critique["issues"][number]) => c.flaw!.rules.includes(i.rule) && (!c.flaw!.mark || `${i.quote} ${i.fix}`.includes(c.flaw!.mark));
+    const correct = c.flaw ? crit.verdict === "revise" && crit.issues.some(names) : crit.verdict === "approve";
+    const rightPlace = c.flaw ? crit.verdict === "revise" && crit.issues.some((i) => i.where === c.flaw!.where && names(i)) : correct;
     results.push({ id: c.id, flawed: !!c.flaw, verdict: crit.verdict, correct, rightPlace, issues: crit.issues });
     log(`${c.id}: ${crit.verdict}${correct ? "" : "  <- wrong"}  ${crit.issues.map((i) => `[${i.where}] ${i.rule}`).join("; ")}`);
   }
