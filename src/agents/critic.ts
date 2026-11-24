@@ -12,6 +12,7 @@ A program has already checked length, links, dashes, hashtags, stock phrases and
 - hook: the first line of the post and of the thread must make a developer stop. Opening with the project name and a definition, or a vague claim, fails.
 - specific: every part should say something only this project could say. Generic lines ("makes your workflow easier", "built for developers") fail.
 - supported: no claim may go beyond the facts. Each fact has a claim and the exact quote from the repo that backs it; detail that is in the quote counts as supported. Words like "production-ready", "fastest", "first", "anyone can", or implied users and adoption that the facts don't show fail.
+- comparisons: when a part compares two things (two prompts, before and after, this versus that), check against the facts which one came out ahead. Every number must be tied to the thing it belongs to, and neither the wording nor the order may suggest the opposite of what the facts say. "A was 14 points better, 83% vs 69%. After the fix it came out 91% vs 87%" fails when B scored 91%: the reader will assume A did. Report it under "supported".
 - voice: it should sound like the builder talking, not like marketing or an AI. Hype, filler and forced rhetorical questions fail.
 - story: the thread should move forward. Parts that repeat each other, or a thread with no clear "how to try it" at the end, fail.
 - cta: exactly one clear next step (the link, or what to try). None, or several competing ones, fails.

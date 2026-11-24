@@ -53,7 +53,7 @@ Each run is a folder under `runs/` with `run.json`, `report.md`, and every agent
 
 ## Results
 
-Five live runs on four public repos, with Claude Sonnet:
+Five live runs on four public repos, with Claude Sonnet, before the comparisons rule was added to the critic:
 
 | Repo | Facts kept | Rounds | Sent back by | Critic approved | Time | Cost at API prices |
 |---|---|---|---|---|---|---|
@@ -65,18 +65,30 @@ Five live runs on four public repos, with Claude Sonnet:
 
 When no draft passes in time, the last one still goes to you, marked as not approved, with the reasons.
 
-**Is the critic any good?** `npm run crew -- critic-eval` gives the critic 13 hand-written drafts: 10 with one planted flaw each (a hook that opens with a definition, a generic line, three kinds of overclaiming, hype voice, rhetorical-question spam, a part that repeats another, no call to action, four competing ones) and 3 clean drafts. All 13 pass the lint, so this measures only the LLM layer. Over 3 runs:
+**Is the critic any good?** `npm run crew -- critic-eval` gives the critic 16 hand-written drafts: 12 with one planted flaw each and 4 clean ones. The flaws:
+- a hook that opens with a definition
+- a generic line
+- three kinds of overclaiming
+- hype voice
+- rhetorical-question spam
+- a part that repeats another
+- no call to action, and four competing ones
+- two comparisons where every number is right but the winner is wrong
 
-- **Flawed drafts:** 30 of 30 sent back, each naming the planted flaw at the right part.
-- **Clean drafts:** 5 of 9 approved. The 4 rejections were all for amounts no fact gave: "mostly waiting on the human" when the fact says "idle for hours", and "thousands of JSON lines" with no line count anywhere. That's strict, and it's the strictness the critic was told to have.
+All 16 pass the lint, so this measures only the LLM layer. Over 3 runs with the current prompt:
 
-So the critic misses nothing it was built to catch, and leans strict. In a run, strictness costs an extra round, not a bad post.
+- **Flawed drafts:** 36 of 36 sent back, each naming the planted flaw at the right part. For the two comparison cases, a catch has to point at the flipped numbers themselves.
+- **Clean drafts:** 5 of 12 approved. The rejections are for amounts no fact gave: "mostly waiting on the human" when the fact says "idle for hours", or "thousands of JSON lines" with no line count anywhere. That's strict, and it's the strictness the critic was told to have.
+
+So the critic misses nothing it was tested on, and leans strict. In a run, strictness costs an extra round, not a bad post.
 
 ## What broke and how it was fixed
 
 **The critic rejected true claims.** The first live run was sent back three times for "unsupported" claims that were in the README. The writer saw each fact's claim and its exact quote, but the critic saw only the claim, and the claims were summaries ("per-tool stats") while the quotes held the detail ("per-tool call counts, errors and p50/p95 latency"). The critic now judges against the same evidence the writer used.
 
 **The writer undid its own fixes.** In that same run, round 3 brought back a line round 1 had made it cut, because the writer only saw the latest round's feedback. It now gets every earlier round's feedback too, marked as still applying. The crew test covers both fixes.
+
+**Right numbers, wrong winner.** A live draft said "the rules prompt was 14 points better, 83% vs 69%. After I fixed it, the result was 91% vs 87%." Every number was in the facts, so the lint passed it, and the critic approved it. But the plain prompt scored 91%, and the order made readers assume the rules prompt still won. It was caught at the approval step, which is what the step is for. Two cases now cover it: one states the flipped winner outright, and one copies the live draft's order. Before the fix, the critic caught the explicit flip 3 of 3 times and the implied one 0 of 3. A "comparisons" rule in the critic's prompt now says to check which side came out ahead and to tie every number to its side. With it, the critic catches both cases 3 of 3 times. A clean control that states the result correctly was never flagged on that line, before or after.
 
 **The first critic eval was wrong, not the critic.** It rejected all three "clean" drafts, and reading why showed the critic was right: the drafts made four claims ("no server", "my eval harness", "every session file") that the eval's hand-written fact list didn't include. The facts now carry the README's wording for them. The remaining rejections are the strict ones described above, and the drafts weren't rewritten to pass.
 
@@ -113,7 +125,7 @@ CI runs them on Node 22 and 24. The live runs and the critic eval use your Claud
 ## Limits
 
 - X only. The voice rules suit developer launches, not every audience.
-- The critic eval is 13 drafts about one project. It shows the critic can catch these flaws, not that it catches every flaw.
+- The critic eval is 16 drafts about one project. It shows the critic can catch these flaws, not that it catches every flaw.
 - In the live runs the researcher quoted perfectly, so quote verification never had to drop a fact. The tests cover the cases where it does.
 - Costs are what the same tokens would cost on the API. On a subscription they count toward your plan's usage instead.
 
